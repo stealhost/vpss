@@ -1,0 +1,29 @@
+language: scala
+jdk: oraclejdk8
+script: ./.travis.sh
+cache:
+  directories:
+  - $HOME/.cache
+  - $HOME/.ivy2/cache
+  - $HOME/.sbt
+before_install:
+  - git fetch --tags
+sudo: required
+stages:
+  - name: test
+  - name: release
+    if: (branch = master AND type = push) OR (tag IS present)
+  - name: update-website
+    if: (branch = master AND type = push) OR (tag IS present)
+jobs:
+  include:
+  - scala: 2.11.12
+  - scala: 2.12.6
+  - scala: 2.12.7
+  - env: WEBSITE=1 # unused from the script, just to know what the job does from the Travis UI
+    script: scripts/update-website.sh
+  - stage: update-website
+    env: PUSH_WEBSITE=1
+    script: scripts/update-website.sh
+  - stage: release
+    script: sbt ci-release
